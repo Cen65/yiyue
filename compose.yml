@@ -1,0 +1,52 @@
+name: yiyue
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: yiyue
+      POSTGRES_USER: yiyue
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?请先生成.env}
+    ports: ["127.0.0.1:55432:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yiyue -d yiyue"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  redis:
+    image: redis:7.4-alpine
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?请先生成.env}", "--appendonly", "yes"]
+    ports: ["127.0.0.1:56379:6379"]
+    volumes: ["redis-data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  yiyue-server:
+    build: ./yiyue-server
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/yiyue
+      DB_USERNAME: yiyue
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      DEMO_ENABLED: ${DEMO_ENABLED:-false}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD}
+      DEMO_PATIENT_PASSWORD: ${DEMO_PATIENT_PASSWORD}
+      AI_ENABLED: ${AI_ENABLED:-false}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-flash}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  yiyue-web:
+    build: ./yiyue-web
+    ports: ["127.0.0.1:8090:80"]
+    depends_on: [yiyue-server]
+volumes:
+  postgres-data:
+  redis-data:

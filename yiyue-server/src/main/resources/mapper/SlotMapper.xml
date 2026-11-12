@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yiyue.mapper.SlotMapper">
+  <!-- 容量比较与自增必须在数据库内原子完成，避免并发超约。 -->
+  <update id="reserve">
+    UPDATE appointment_slot SET reserved = reserved + 1
+    WHERE id = #{id} AND tenant_id = #{tenantId} AND reserved &lt; capacity
+  </update>
+  <!-- 与预约状态迁移处于同一事务，重复取消不会再次释放容量。 -->
+  <update id="release">
+    UPDATE appointment_slot SET reserved = reserved - 1
+    WHERE id = #{id} AND tenant_id = #{tenantId} AND reserved &gt; 0
+  </update>
+</mapper>
