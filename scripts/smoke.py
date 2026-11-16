@@ -6,6 +6,7 @@ import os
 import urllib.request
 import urllib.error
 import uuid
+from datetime import datetime, timezone, timedelta
 
 root = Path(__file__).resolve().parents[1]
 settings = dict(line.split("=", 1) for line in (root / ".env").read_text().splitlines() if "=" in line and not line.startswith("#"))
@@ -33,7 +34,14 @@ class Client:
 
 patient = Client("hospital", "patient")
 schedules = patient.call("/schedules")
-slot = next(s for schedule in schedules for s in patient.call(f"/slots?scheduleId={schedule['id']}") if s["reserved"] < s["capacity"])
+# 跨天运行时跳过已开始的演示时段，避免把业务拒绝误认为接口回归。
+now = datetime.now(timezone(timedelta(hours=8))).replace(tzinfo=None)
+slot = next((s for schedule in schedules
+             for s in patient.call(f"/slots?scheduleId={schedule['id']}")
+             if s["reserved"] < s["capacity"]
+             and datetime.fromisoformat(s["startAt"]) > now), None)
+if slot is None:
+    raise SystemExit("未找到未来且有余量的演示号源，请先由管理员发布排班。")
 key = str(uuid.uuid4())
 created = patient.call("/patient/appointments", {"slotId": slot["id"], "requestKey": key})
 try:

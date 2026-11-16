@@ -1,26 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
-import fs from 'node:fs'
-import path from 'node:path'
 
-const envPath = path.resolve(process.cwd(), '../.env')
-const settings = fs.existsSync(envPath)
-  ? Object.fromEntries(
-      fs
-        .readFileSync(envPath, 'utf8')
-        .split(/\r?\n/)
-        .filter((l) => l.includes('='))
-        .map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]),
-    )
-  : {}
-async function login(page: Page) {
-  const password = process.env.DEMO_PATIENT_PASSWORD || settings.DEMO_PATIENT_PASSWORD
-  if (!password) throw new Error('请通过本地 .env 或环境变量配置演示患者密码')
-  await page.goto('/')
-  await expect(page.getByRole('heading', { name: '欢迎使用医约' })).toBeVisible()
-  await page.getByLabel('密码', { exact: true }).fill(password)
-  await page.getByRole('button', { name: '登录', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '预约挂号', exact: true })).toBeVisible()
-}
+import { login } from './helpers'
 async function enableMock(page: Page) {
   // 只替换模型接口，不发送症状至外部服务；登录及机构科室仍使用本地真实后端。
   await page.route('**/api/patient/triage/status', (route) =>

@@ -26,3 +26,7 @@
 ## 智能导诊
 
 `GET /patient/triage/status` 返回 `enabled` 和 `provider`。`POST /patient/triage` 接收 `symptoms`、`consent`，仅 PATIENT 角色可调用且必须带 CSRF token。请求长度5–1500字符，明确同意后才允许发送。结果字段 `urgency`、`departments`、`questions`、`message`，细节见 `ai-triage.md`。未配置503，格式/模型异常502，网络超时504，每账号每自然分钟超过8次返回429。
+
+## v0.2.0接口
+
+新增运营、平台、医护、档案和分页接口，详见v0.2.0.md；原有URL仍兼容。

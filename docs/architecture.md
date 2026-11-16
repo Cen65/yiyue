@@ -44,3 +44,11 @@ BCrypt 保存密码；登录轮换会话 ID；Redis 会话 Cookie 为 HttpOnly +
 ## 智能导诊模块
 
 新增 `triage` 模块复用已有 SessionUser、机构科室 Mapper、CSRF 和统一异常。使用 Spring RestClient 调用 DeepSeek，未新增生产依赖。科室是本机构数据库白名单，模型只能返回分类ID、紧急性枚举、固定追问枚举。模型原始文本不直接展示；仅给匹配参考，无诊断或治疗能力。Redis 原子限流与业务会话使用不同命名空间。完整说明与来源见 `ai-triage.md`。
+
+## v0.1.1 工程分层
+
+代码组织已调整为 controller、service/impl、mapper、model/entity/req/resp；旧 booking/scheduling 包的业务已迁到服务实现。triage 包保留外部调用基础设施。以 project-structure.md 为当前目录说明；既有容量、事务、安全和状态设计仍然适用。
+
+## v0.2.0当前结构
+
+后端已拆为Maven三模块，历史单模块描述以project-structure.md为当前说明。预约防重改为就诊人维度，容量仍由PostgreSQL原子控制。

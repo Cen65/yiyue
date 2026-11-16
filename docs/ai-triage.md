@@ -50,3 +50,7 @@ Redis 按机构与账号原子计数，每自然分钟最多8次，键120秒过�
 ## 就医提示的参考来源
 
 紧急就医提示参考 [NHS 呼吸困难说明](https://www.nhs.uk/symptoms/shortness-of-breath/)；页面不使用其英国专用急救号码，而提示联系所在地急救服务。该资料只支持一般提醒，不构成本系统的临床分诊规范。医疗 AI 的错误风险参考 [WHO 对健康领域大语言模型的提醒](https://www.who.int/news/item/16-05-2023-who-calls-for-safe-and-ethical-ai-for-health)。
+
+## v0.2.0模块位置
+
+导诊完整代码位于yiyue-server/yiyue-ai；数据库白名单适配位于application，过滤停用科室。AI不引入MyBatis或数据库。

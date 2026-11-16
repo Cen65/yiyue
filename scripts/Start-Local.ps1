@@ -48,7 +48,7 @@ $env:API_PROXY_TARGET = "http://127.0.0.1:$ServerPort"
 $env:DB_USERNAME = 'yiyue'
 $env:REDIS_HOST = '127.0.0.1'
 $env:REDIS_PORT = "$RedisPort"
-$jar = Join-Path $root 'yiyue-server/target/yiyue-server-0.1.0.jar'
+$jar = Join-Path $root 'yiyue-server/yiyue-application/target/yiyue-server-0.2.0.jar'
 if (!(Test-Path -LiteralPath $jar)) {
     Push-Location (Join-Path $root 'yiyue-server')
     try { & mvn.cmd -B -DskipTests package; if ($LASTEXITCODE -ne 0) { throw '后端构建失败' } } finally { Pop-Location }

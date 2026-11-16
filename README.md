@@ -1,6 +1,6 @@
 # 医约 YiYue
 
-面向诊所与多院区医院的前后端分离预约平台。当前版本 **0.1.0：可运行的门诊预约 MVP**，提供两种机构的虚构演示数据。
+面向诊所与多院区医院的前后端分离预约平台。当前代码版本 **0.2.0：AI模块化与基础运营（未发布）**，提供两种机构的虚构演示数据。
 
 ## 工程目录与独立运行
 
@@ -16,6 +16,10 @@ D:\IDEA_WORK\yiyue\
 两端通过 HTTP `/api` 通信。前端开发服务默认5173，后端默认8080；本机启停脚本使用15173和18080以避开已有程序。前端由 Vite 或 Nginx 代理 API，Java 不打包或托管前端页面。
 
 IDEA 导入 `yiyue-server/pom.xml` 后可独立运行 `com.yiyue.YiYueApplication`。前端在 `yiyue-web` 中独立安装依赖并运行 `npm run dev`。数据库、Redis 及端口配置见下面的开发说明。
+
+## 开发维护入口
+
+后续开发先阅读根 `AGENTS.md`、`docs/roadmap.md`、`docs/project-structure.md` 和 `CHANGELOG.md`。路线已细分版本、任务编号、依赖与验收标准；当前v0.2.0基础运营与AI模块化已完成本地验证；AI实网待评估，详见docs/v0.2.0.md。
 
 ## 技术选型
 
@@ -102,7 +106,7 @@ HTTP 冒烟验证：服务启动后在项目根目录运行 `python scripts/smok
 
 ## 当前边界
 
-当前支持的组织规模通过模型和虚构场景验证，尚未证明“大医院生产级”性能。只支持当前账号本人预约，医护操作暂由管理员角色承担。支付、候补、停诊改约、通知投递、设备联合预约、机构开户、医生与患者档案维护尚未实现。暂未接入 HIS、医保、短信或真实支付；无真实患者数据。
+当前支持的组织规模通过模型和虚构场景验证，尚未证明“大医院生产级”性能。支持授权就诊人代预约及管理员/前台/医生/平台管理员独立岗位。已具备机构开户及医生、就诊人档案维护；支付、候补、停诊改约、通知投递、设备联合预约尚未实现。暂未接入 HIS、医保、短信或真实支付；无真实患者数据。
 
 上线前需按具体机构要求完成 HTTPS、安全加固、登录限流、凭证托管、备份恢复及医疗信息系统对接验证；示例配置只面向本机开发。
 
@@ -111,3 +115,9 @@ HTTP 冒烟验证：服务启动后在项目根目录运行 `python scripts/smok
 在本地 `.env` 设置 `AI_ENABLED=true`，填写 `DEEPSEEK_API_KEY`，并配置 `DEEPSEEK_MODEL`（默认 `deepseek-flash`），再通过启停脚本重启服务。密钥不进入前端。具体请求格式、数据处理、测试方法和未验证部分见 `docs/ai-triage.md`。缺少 Key 时展示真实的未启用状态，不使用模拟回答替代模型。
 
 浏览器回归：服务启动后，在 yiyue-web 运行 `npx playwright install chromium`、`npm run test:e2e`。该测试只模拟 AI 返回，不对外发送症状，真实模型效果尚未验证。
+
+## v0.2.0入口
+
+后端父POM下为yiyue-common、yiyue-ai、yiyue-application。IDEA从父POM导入，运行application中的YiYueApplication。执行mvn -f yiyue-server/pom.xml verify构建全模块，-pl yiyue-ai -am test可独立验证AI。
+
+管理员进入基础运营，患者进入就诊人管理。新机构可在登录页直接输入机构编码。平台账号首次需在本地.env显式设置PLATFORM_ADMIN_ENABLED=true及随机PLATFORM_ADMIN_PASSWORD后重启，机构编码platform、账号platform_admin；默认关闭，不提升普通管理员权限。详见docs/v0.2.0.md。
