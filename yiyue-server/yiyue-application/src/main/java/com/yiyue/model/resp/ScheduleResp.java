@@ -10,7 +10,9 @@ public record ScheduleResp(
     Long doctorId,
     LocalDateTime startAt,
     LocalDateTime endAt,
-    Long departmentId) {
+    Long departmentId,
+    String status,
+    String stopReason) {
   public static ScheduleResp from(ScheduleDO data) {
     return new ScheduleResp(
         data.getId(),
@@ -19,6 +21,8 @@ public record ScheduleResp(
         data.getDoctorId(),
         data.getStartAt(),
         data.getEndAt(),
-        data.getDepartmentId());
+        data.getDepartmentId(),
+        data.getStatus(),
+        data.getStopReason());
   }
 }

@@ -67,6 +67,7 @@ public class CatalogServiceImpl implements CatalogService {
     return schedules.selectList(
         Wrappers.<ScheduleDO>lambdaQuery()
             .eq(ScheduleDO::getTenantId, user.tenantId())
+            .eq(ScheduleDO::getStatus, "OPEN")
             .ge(ScheduleDO::getEndAt, LocalDateTime.now(clock))
             .lt(ScheduleDO::getStartAt, LocalDateTime.now(clock).plusDays(30))
             .orderByAsc(ScheduleDO::getStartAt));
@@ -85,6 +86,7 @@ public class CatalogServiceImpl implements CatalogService {
     var filter =
         Wrappers.<ScheduleDO>lambdaQuery()
             .eq(ScheduleDO::getTenantId, u.tenantId())
+            .eq(ScheduleDO::getStatus, "OPEN")
             .ge(ScheduleDO::getEndAt, LocalDateTime.now(clock))
             .lt(ScheduleDO::getStartAt, LocalDateTime.now(clock).plusDays(30))
             .eq(q.campusId() != null, ScheduleDO::getCampusId, q.campusId())

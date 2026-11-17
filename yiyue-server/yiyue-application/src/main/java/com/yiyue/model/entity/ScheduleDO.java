@@ -16,4 +16,6 @@ public class ScheduleDO {
   private LocalDateTime startAt;
   private LocalDateTime endAt;
   private Long departmentId;
+  private String status = "OPEN";
+  private String stopReason;
 }

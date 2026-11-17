@@ -1,6 +1,6 @@
 # 医约 YiYue
 
-面向诊所与多院区医院的前后端分离预约平台。当前代码版本 **0.2.0：AI模块化与基础运营（未发布）**，提供两种机构的虚构演示数据。
+面向诊所与多院区医院的前后端分离预约平台。当前代码版本 **0.3.0：停诊、替诊与患者确认改约（本地完成，未发布）**，提供两种机构的虚构演示数据。
 
 ## 工程目录与独立运行
 
@@ -19,7 +19,7 @@ IDEA 导入 `yiyue-server/pom.xml` 后可独立运行 `com.yiyue.YiYueApplicatio
 
 ## 开发维护入口
 
-后续开发先阅读根 `AGENTS.md`、`docs/roadmap.md`、`docs/project-structure.md` 和 `CHANGELOG.md`。路线已细分版本、任务编号、依赖与验收标准；当前v0.2.0基础运营与AI模块化已完成本地验证；AI实网待评估，详见docs/v0.2.0.md。
+后续开发先阅读根 `AGENTS.md`、`docs/roadmap.md`、`docs/project-structure.md` 和 `CHANGELOG.md`。路线已细分版本、任务编号、依赖与验收标准；当前v0.3.0停诊、替诊与改约已完成本地验证；AI实网待评估，详见docs/v0.3.0.md。
 
 ## 技术选型
 
@@ -121,3 +121,9 @@ HTTP 冒烟验证：服务启动后在项目根目录运行 `python scripts/smok
 后端父POM下为yiyue-common、yiyue-ai、yiyue-application。IDEA从父POM导入，运行application中的YiYueApplication。执行mvn -f yiyue-server/pom.xml verify构建全模块，-pl yiyue-ai -am test可独立验证AI。
 
 管理员进入基础运营，患者进入就诊人管理。新机构可在登录页直接输入机构编码。平台账号首次需在本地.env显式设置PLATFORM_ADMIN_ENABLED=true及随机PLATFORM_ADMIN_PASSWORD后重启，机构编码platform、账号platform_admin；默认关闭，不提升普通管理员权限。详见docs/v0.2.0.md。
+
+## v0.3.0 入口
+
+机构管理员在“排班与号源”选择“排班变更”，填写原因并选择停诊或替诊。提交后在“排班变更”查看影响清单、处理进度、失败重试，也可为单个预约提供同院区同科室的改约建议。患者进入“变更通知”，查看原预约取消结果，选择新时段并勾选同意后改约，或拒绝建议。
+
+新号源不会提前保留；确认时校验实时容量。当前通知只在系统内展示，短信/outbox属于v0.4.0。详见 `docs/v0.3.0.md`。

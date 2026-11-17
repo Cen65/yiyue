@@ -89,6 +89,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             Wrappers.<ScheduleDO>lambdaQuery()
                 .eq(ScheduleDO::getTenantId, user.tenantId())
                 .eq(ScheduleDO::getDoctorId, doctor.getId())
+                .eq(ScheduleDO::getStatus, "OPEN")
                 .lt(ScheduleDO::getStartAt, input.endAt())
                 .gt(ScheduleDO::getEndAt, input.startAt()));
     if (overlap) throw BusinessException.conflict("该医生已有重叠排班，包括其他院区");

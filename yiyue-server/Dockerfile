@@ -8,7 +8,7 @@ RUN mvn -B -DskipTests package
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 RUN addgroup -S yiyue && adduser -S yiyue -G yiyue
-COPY --from=build /app/yiyue-application/target/yiyue-server-0.2.0.jar app.jar
+COPY --from=build /app/yiyue-application/target/yiyue-server-0.3.0.jar app.jar
 USER yiyue
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

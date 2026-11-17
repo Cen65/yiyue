@@ -40,6 +40,9 @@ management:
       exposure:
         include: health,info
 yiyue:
+  change:
+    worker-enabled: ${CHANGE_WORKER_ENABLED:true}
+    poll-ms: ${CHANGE_POLL_MS:5000}
   demo:
     enabled: ${DEMO_ENABLED:false}
     admin-password: ${DEMO_ADMIN_PASSWORD:}

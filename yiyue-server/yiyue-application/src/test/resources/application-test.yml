@@ -10,3 +10,6 @@ spring:
 yiyue:
   demo:
     enabled: false
+
+  change:
+    worker-enabled: false

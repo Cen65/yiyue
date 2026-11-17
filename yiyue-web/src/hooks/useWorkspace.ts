@@ -57,21 +57,25 @@ export function useWorkspace() {
   )
   const admin = computed(() => user.value?.role === 'ADMIN')
   const pageTitle = computed(() =>
-    tab.value === 'platform'
-      ? '机构管理'
-      : tab.value === 'operations'
-        ? '基础运营'
-        : tab.value === 'profiles'
-          ? '就诊人管理'
-          : tab.value === 'triage'
-            ? '智能导诊'
-            : tab.value === 'booking'
-              ? admin.value
-                ? '排班与号源'
-                : '预约挂号'
-              : admin.value || staff.value
-                ? '预约管理'
-                : '我的预约',
+    tab.value === 'changes'
+      ? admin.value
+        ? '排班变更'
+        : '变更通知'
+      : tab.value === 'platform'
+        ? '机构管理'
+        : tab.value === 'operations'
+          ? '基础运营'
+          : tab.value === 'profiles'
+            ? '就诊人管理'
+            : tab.value === 'triage'
+              ? '智能导诊'
+              : tab.value === 'booking'
+                ? admin.value
+                  ? '排班与号源'
+                  : '预约挂号'
+                : admin.value || staff.value
+                  ? '预约管理'
+                  : '我的预约',
   )
   const dates = computed(() =>
     Array.from({ length: 7 }, (_, i) => {

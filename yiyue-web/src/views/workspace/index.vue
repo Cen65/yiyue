@@ -13,6 +13,9 @@ import {
   Plus,
   X,
 } from 'lucide-vue-next'
+import { ref } from 'vue'
+import type { Schedule } from '../../types'
+import ChangesPanel from '../changes/ChangesPanel.vue'
 import PlatformPanel from '../platform/PlatformPanel.vue'
 import OperationsPanel from '../operations/OperationsPanel.vue'
 import PatientProfiles from '../patients/PatientProfiles.vue'
@@ -69,6 +72,11 @@ const {
   action,
   createSchedule,
 } = useWorkspace()
+const changeSource = ref<Schedule | null>(null)
+function onScheduleChanged() {
+  void run(load)
+  switchTab('changes')
+}
 </script>
 
 <template>
@@ -168,6 +176,13 @@ const {
       <span class="nav-label">门诊服务</span>
       <nav>
         <button
+          v-if="!platform && !staff"
+          :class="{ active: tab === 'changes' }"
+          @click="switchTab('changes')"
+        >
+          <CalendarDays :size="19" />{{ admin ? '排班变更' : '变更通知' }}
+        </button>
+        <button
           v-if="!platform"
           :class="{ active: tab === 'booking' }"
           @click="switchTab('booking')"
@@ -239,7 +254,7 @@ const {
               }}
             </p>
           </div>
-          <button v-if="admin" class="primary" @click="showCreate = true">
+          <button v-if="admin && tab === 'booking'" class="primary" @click="showCreate = true">
             <Plus :size="17" />发布排班
           </button>
         </div>
@@ -247,6 +262,12 @@ const {
         <p v-if="notice" class="alert success" role="status">{{ notice }}</p>
         <PlatformPanel v-if="platform" /><OperationsPanel
           v-else-if="tab === 'operations'"
+          @changed="run(load)"
+        />
+        <ChangesPanel
+          v-else-if="tab === 'changes'"
+          :admin="admin"
+          :catalog="catalog"
           @changed="run(load)"
         />
         <PatientProfiles v-else-if="tab === 'profiles'" />
@@ -324,9 +345,13 @@ const {
                   ><Clock3 :size="14" />{{ timeLabel(s.startAt) }} — {{ timeLabel(s.endAt) }}</span
                 >
               </div>
-              <button class="slot-button" :disabled="busy" @click="selectSchedule(s)">
-                {{ admin ? '查看号源' : '选择时段' }}<ChevronRight :size="15" />
-              </button>
+              <div class="schedule-actions">
+                <button v-if="admin" class="text-button danger" @click="changeSource = s">
+                  排班变更</button
+                ><button class="slot-button" :disabled="busy" @click="selectSchedule(s)">
+                  {{ admin ? '查看号源' : '选择时段' }}<ChevronRight :size="15" />
+                </button>
+              </div>
             </article>
           </div>
           <div class="pagination">
@@ -398,6 +423,18 @@ const {
         </footer>
       </div>
     </main>
+  </div>
+  <div v-if="changeSource" class="overlay">
+    <section class="modal">
+      <ChangesPanel
+        :key="changeSource.id"
+        :admin="true"
+        :catalog="catalog"
+        :source="changeSource"
+        @close="changeSource = null"
+        @changed="onScheduleChanged"
+      />
+    </section>
   </div>
   <div v-if="selected" class="overlay" @click.self="!busy && (selected = null)">
     <section class="modal">

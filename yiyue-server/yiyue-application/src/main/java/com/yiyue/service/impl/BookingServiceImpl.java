@@ -27,6 +27,8 @@ public class BookingServiceImpl implements BookingService {
   private final Clock clock;
   private final PatientProfileService profiles;
   private final StaffAccessService staffAccess;
+  private final com.yiyue.mapper.TenantMapper tenants;
+  private final com.yiyue.mapper.ScheduleMapper schedules;
 
   @Transactional
   public AppointmentDO book(SessionUser user, long slotId, String key) {
@@ -35,6 +37,7 @@ public class BookingServiceImpl implements BookingService {
 
   @Transactional
   public AppointmentDO book(SessionUser user, long slotId, String key, Long patientId) {
+    tenants.lock(user.tenantId());
     var patient = profiles.requireOwned(user, patientId);
     AppointmentDO existing =
         appointments.selectOne(
@@ -54,6 +57,13 @@ public class BookingServiceImpl implements BookingService {
                 .eq(SlotDO::getTenantId, user.tenantId())
                 .eq(SlotDO::getId, slotId));
     if (slot == null) throw BusinessException.missing();
+    var schedule =
+        schedules.selectOne(
+            Wrappers.<com.yiyue.model.entity.ScheduleDO>lambdaQuery()
+                .eq(com.yiyue.model.entity.ScheduleDO::getTenantId, user.tenantId())
+                .eq(com.yiyue.model.entity.ScheduleDO::getId, slot.getScheduleId())
+                .eq(com.yiyue.model.entity.ScheduleDO::getStatus, "OPEN"));
+    if (schedule == null) throw BusinessException.conflict("排班已停诊，请查看变更通知");
     if (!slot.getStartAt().isAfter(LocalDateTime.now(clock)))
       throw BusinessException.conflict("该时段已开始，无法预约");
     // 数据库原子占位与预约落库共用事务；重复请求的唯一键冲突会回滚占用。
@@ -74,6 +84,7 @@ public class BookingServiceImpl implements BookingService {
 
   @Transactional
   public void cancel(SessionUser user, long id) {
+    tenants.lock(user.tenantId());
     AppointmentDO appointment = own(user, id);
     if ("CANCELLED".equals(appointment.getStatus())) return;
     SlotDO slot = slots.selectById(appointment.getSlotId());
@@ -96,7 +107,17 @@ public class BookingServiceImpl implements BookingService {
 
   @Transactional
   public void transition(SessionUser user, long id, String action) {
+    tenants.lock(user.tenantId());
     staffAccess.checkTransition(user, id, action);
+    var current =
+        appointments.selectOne(
+            Wrappers.<AppointmentDO>lambdaQuery()
+                .eq(AppointmentDO::getTenantId, user.tenantId())
+                .eq(AppointmentDO::getId, id));
+    if (current == null) throw BusinessException.missing();
+    var slot = slots.selectById(current.getSlotId());
+    var schedule = schedules.selectById(slot.getScheduleId());
+    if (!"OPEN".equals(schedule.getStatus())) throw BusinessException.conflict("排班已停诊，不能办理接诊");
     String from, to;
     switch (action) {
       case "check-in" -> {

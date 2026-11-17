@@ -135,6 +135,7 @@ public class OperationsServiceImpl implements OperationsService {
         && schedules.exists(
             Wrappers.<ScheduleDO>lambdaQuery()
                 .eq(ScheduleDO::getTenantId, u.tenantId())
+                .eq(ScheduleDO::getStatus, "OPEN")
                 .eq(ScheduleDO::getCampusId, id)
                 .gt(ScheduleDO::getEndAt, LocalDateTime.now(clock))))
       throw BusinessException.conflict("院区仍有未结束排班，不能停用");
@@ -224,6 +225,7 @@ public class OperationsServiceImpl implements OperationsService {
           schedules.selectList(
               Wrappers.<ScheduleDO>lambdaQuery()
                   .eq(ScheduleDO::getTenantId, u.tenantId())
+                  .eq(ScheduleDO::getStatus, "OPEN")
                   .eq(ScheduleDO::getDoctorId, id)
                   .gt(ScheduleDO::getEndAt, LocalDateTime.now(clock)));
       if (!future.isEmpty()
