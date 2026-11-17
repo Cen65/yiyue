@@ -1,0 +1,11 @@
+{
+  "java_force_kill": true,
+  "observed_lock_wait": true,
+  "uncommitted_confirmation_rolled_back": true,
+  "committed_hold_survived": true,
+  "redis_session_survived": true,
+  "outbox_recovered_once": true,
+  "confirmation_retry_idempotent": true,
+  "capacity_consistent": true,
+  "scope": "Java进程；数据库与Redis未强杀"
+}

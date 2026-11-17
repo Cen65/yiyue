@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
   private final SlotMapper slots;
+  private final com.yiyue.service.WaitlistService waitlist;
   private final AppointmentMapper appointments;
   private final AuditEventMapper audits;
   private final Clock clock;
@@ -67,6 +68,7 @@ public class BookingServiceImpl implements BookingService {
     if (!slot.getStartAt().isAfter(LocalDateTime.now(clock)))
       throw BusinessException.conflict("该时段已开始，无法预约");
     // 数据库原子占位与预约落库共用事务；重复请求的唯一键冲突会回滚占用。
+    waitlist.reconcile(user.tenantId(), slotId);
     if (slots.reserve(user.tenantId(), slotId) != 1)
       throw BusinessException.conflict("号源已满，请选择其他时段");
     AppointmentDO appointment = new AppointmentDO();
@@ -102,6 +104,7 @@ public class BookingServiceImpl implements BookingService {
     if (changed == 0) throw BusinessException.conflict("预约状态已变化，请刷新");
     if (slots.release(user.tenantId(), appointment.getSlotId()) != 1)
       throw BusinessException.conflict("号源数据异常，请联系管理员");
+    waitlist.reconcile(user.tenantId(), appointment.getSlotId());
     audit(user, "CANCEL", id);
   }
 

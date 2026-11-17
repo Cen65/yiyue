@@ -1,0 +1,74 @@
+{
+  "scope": "单机闭环HTTP混合负载；真实认证/CSRF/PostgreSQL/Redis，非医院生产验收",
+  "seed": {
+    "extra_schedules": 10000,
+    "extra_slots": 10000,
+    "extra_cancelled_appointments": 100000
+  },
+  "stages": [
+    {
+      "concurrency": 10,
+      "duration_seconds": 20.06,
+      "operations": 8457,
+      "operations_per_second": 421.52,
+      "p50_ms": 18.42,
+      "p95_ms": 61.0,
+      "p99_ms": 100.03,
+      "results": {
+        "ok": 8457
+      },
+      "operation_mix": {
+        "schedule_page": 2116,
+        "appointments": 2116,
+        "catalog": 2113,
+        "write_cycle": 2112
+      }
+    },
+    {
+      "concurrency": 50,
+      "duration_seconds": 20.12,
+      "operations": 11833,
+      "operations_per_second": 587.98,
+      "p50_ms": 67.41,
+      "p95_ms": 190.67,
+      "p99_ms": 266.17,
+      "results": {
+        "ok": 11833
+      },
+      "operation_mix": {
+        "schedule_page": 2965,
+        "appointments": 2957,
+        "catalog": 2957,
+        "write_cycle": 2954
+      }
+    },
+    {
+      "concurrency": 100,
+      "duration_seconds": 20.22,
+      "operations": 12017,
+      "operations_per_second": 594.34,
+      "p50_ms": 143.66,
+      "p95_ms": 354.49,
+      "p99_ms": 434.66,
+      "results": {
+        "ok": 12017
+      },
+      "operation_mix": {
+        "schedule_page": 3025,
+        "appointments": 3002,
+        "catalog": 2998,
+        "write_cycle": 2992
+      }
+    }
+  ],
+  "capacity_check": "0:0",
+  "all_capacity_invariant_violations": "0",
+  "last_slot_100_sessions": {
+    "results": {
+      "200": 1,
+      "409": 99
+    },
+    "p95_ms": 274.21,
+    "capacity_consistent": true
+  }
+}

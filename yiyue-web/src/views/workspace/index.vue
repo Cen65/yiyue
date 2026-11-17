@@ -15,6 +15,8 @@ import {
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import type { Schedule } from '../../types'
+import WaitlistPanel from '../waitlist/WaitlistPanel.vue'
+import { waitlistApi } from '../../apis/waitlist'
 import ChangesPanel from '../changes/ChangesPanel.vue'
 import PlatformPanel from '../platform/PlatformPanel.vue'
 import OperationsPanel from '../operations/OperationsPanel.vue'
@@ -73,6 +75,13 @@ const {
   createSchedule,
 } = useWorkspace()
 const changeSource = ref<Schedule | null>(null)
+async function joinWaitlist(id: number) {
+  await run(async () => {
+    await waitlistApi.join(id, patientId.value ? Number(patientId.value) : undefined)
+    selected.value = null
+    switchTab('waitlist')
+  })
+}
 function onScheduleChanged() {
   void run(load)
   switchTab('changes')
@@ -176,6 +185,13 @@ function onScheduleChanged() {
       <span class="nav-label">门诊服务</span>
       <nav>
         <button
+          v-if="!admin && !staff && !platform"
+          :class="{ active: tab === 'waitlist' }"
+          @click="switchTab('waitlist')"
+        >
+          <Clock3 :size="19" />候补与消息
+        </button>
+        <button
           v-if="!platform && !staff"
           :class="{ active: tab === 'changes' }"
           @click="switchTab('changes')"
@@ -270,6 +286,7 @@ function onScheduleChanged() {
           :catalog="catalog"
           @changed="run(load)"
         />
+        <WaitlistPanel v-else-if="tab === 'waitlist'" />
         <PatientProfiles v-else-if="tab === 'profiles'" />
         <TriagePanel v-else-if="tab === 'triage'" @choose-department="chooseDepartment" />
         <template v-else-if="tab === 'booking'">
@@ -460,6 +477,32 @@ function onScheduleChanged() {
           ><span>剩余 {{ remaining(slot.capacity, slot.reserved) }} / {{ slot.capacity }}</span>
         </button>
       </div>
+      <template v-if="!admin && !staff"
+        ><label
+          >候补就诊人<select v-model="patientId">
+            <option value="">本人（默认）</option>
+            <option
+              v-for="p in profiles.filter((p) => p.authorized)"
+              :key="p.id"
+              :value="String(p.id)"
+            >
+              {{ p.name }}
+            </option>
+          </select></label
+        >
+        <div class="slot-grid">
+          <button
+            v-for="s in slots.filter(
+              (s) => remaining(s.capacity, s.reserved) === 0 && new Date(s.startAt) > new Date(),
+            )"
+            :key="s.id"
+            :disabled="busy"
+            @click="joinWaitlist(s.id)"
+          >
+            {{ timeLabel(s.startAt) }}—{{ timeLabel(s.endAt) }} 加入候补
+          </button>
+        </div></template
+      >
       <p v-if="admin" class="muted">管理端仅查看号源；请使用患者账号预约。</p>
       <p v-if="error" class="alert error">{{ error }}</p>
     </section>

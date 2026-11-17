@@ -1,6 +1,6 @@
 # 当前项目结构
 
-更新日期2026-11-16，后端版本0.3.0。参考人事法务项目的分层与命名，未复制其业务或凭证。
+更新日期2026-11-16，后端版本0.4.0。参考人事法务项目的分层与命名，未复制其业务或凭证。
 
 ```text
 yiyue-server/                    Maven父工程
@@ -31,3 +31,5 @@ yiyue-web/src/
 IDEA导入父POM，运行application启动类；构建与检查从父工程执行。移动Java包后clean。维护入口为根AGENTS、roadmap和CHANGELOG，v0.2.0的配置、迁移和边界见v0.2.0.md。
 
 排班变更使用 ScheduleChangeController → ScheduleChangeService/Impl → Mapper；ChangeItemProcessor 单独控制逐单事务，ChangeTaskRunner 只负责有界轮询。前端 ChangesPanel 复用既有 catalogApi、CSRF 请求和页面样式，管理员与患者共用变更条目契约。
+
+v0.4.0新增WaitlistController → WaitlistService/Impl、候补/outbox/收件箱Mapper与DO、独立Req/Resp，WaitlistRunner轮询；前端waitlistApi及WaitlistPanel复用已有请求、角色导航与样式。浏览器排班夹具抽取scheduleFixture，供改约和候补共同使用。
