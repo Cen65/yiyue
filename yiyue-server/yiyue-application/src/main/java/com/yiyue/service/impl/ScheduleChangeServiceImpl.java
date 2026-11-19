@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ScheduleChangeServiceImpl implements ScheduleChangeService {
   private final ScheduleMapper schedules;
+  private final com.yiyue.service.ResourceService resources;
   private final com.yiyue.service.PaymentService payments;
   private final SlotMapper slots;
   private final AppointmentMapper appointments;
@@ -92,6 +93,7 @@ public class ScheduleChangeServiceImpl implements ScheduleChangeService {
                 .eq(AppointmentDO::getTenantId, u.tenantId())
                 .in(AppointmentDO::getSlotId, slotIds)
                 .eq(AppointmentDO::getStatus, "BOOKED"));
+    var resourceIds = resources.ids(u.tenantId(), scheduleId);
     Long replacement = null;
     if ("SUBSTITUTE".equals(r.kind())) {
       if (r.replacementDoctorId() == null || r.replacementDoctorId().equals(schedule.getDoctorId()))
@@ -104,6 +106,8 @@ public class ScheduleChangeServiceImpl implements ScheduleChangeService {
                   s.getCapacity().intValue() != first.getCapacity().intValue()
                       || Duration.between(s.getStartAt(), s.getEndAt()).toMinutes() != minutes))
         throw BusinessException.conflict("非均匀排班请先另行发布替诊排班再提供改约建议");
+      // 替诊先释放原占用，再创建替代排班；失败由外层事务恢复原占用。
+      resources.release(u.tenantId(), scheduleId);
       replacement =
           scheduleService
               .create(
@@ -116,7 +120,8 @@ public class ScheduleChangeServiceImpl implements ScheduleChangeService {
                       minutes,
                       first.getCapacity(),
                       schedule.getDepartmentId(),
-                      schedule.getFeeCents()))
+                      schedule.getFeeCents(),
+                      resourceIds))
               .getId();
     } else if (!"STOP".equals(r.kind())) throw BusinessException.conflict("不支持的变更方式");
     // 停止新预约与影响清单一次提交；逐单处理由持久化任务恢复，不能只修改排班状态。
@@ -126,6 +131,7 @@ public class ScheduleChangeServiceImpl implements ScheduleChangeService {
             .eq(ScheduleDO::getId, scheduleId)
             .set(ScheduleDO::getStatus, "STOPPED")
             .set(ScheduleDO::getStopReason, r.reason().strip()));
+    resources.release(u.tenantId(), scheduleId);
     payments.closeSchedule(u.tenantId(), scheduleId);
     var change = new ScheduleChangeDO();
     change.setTenantId(u.tenantId());

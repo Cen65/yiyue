@@ -15,6 +15,7 @@ import {
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import type { Schedule } from '../../types'
+import ResourcesPanel from '../resources/ResourcesPanel.vue'
 import PaymentsPanel from '../payments/PaymentsPanel.vue'
 import WaitlistPanel from '../waitlist/WaitlistPanel.vue'
 import { waitlistApi } from '../../apis/waitlist'
@@ -26,6 +27,8 @@ import TriagePanel from '../triage/TriagePanel.vue'
 import { useWorkspace } from '../../hooks/useWorkspace'
 import { dateLabel, timeLabel, remaining, statusLabels } from '../../utils/format'
 const {
+  resourceOptions,
+  selectedResources,
   user,
   booting,
   busy,
@@ -186,6 +189,13 @@ function onScheduleChanged() {
       <span class="nav-label">门诊服务</span>
       <nav>
         <button
+          v-if="admin"
+          :class="{ active: tab === 'resources' }"
+          @click="switchTab('resources')"
+        >
+          <Hospital :size="19" />诊室与设备
+        </button>
+        <button
           v-if="!staff && !platform"
           :class="{ active: tab === 'payments' }"
           @click="switchTab('payments')"
@@ -296,6 +306,7 @@ function onScheduleChanged() {
         />
         <WaitlistPanel v-else-if="tab === 'waitlist'" />
         <PaymentsPanel v-else-if="tab === 'payments'" :admin="admin" />
+        <ResourcesPanel v-else-if="tab === 'resources'" :catalog="catalog" @changed="run(load)" />
         <PatientProfiles v-else-if="tab === 'profiles'" />
         <TriagePanel v-else-if="tab === 'triage'" @choose-department="chooseDepartment" />
         <template v-else-if="tab === 'booking'">
@@ -474,6 +485,9 @@ function onScheduleChanged() {
       </button>
       <h2>{{ doctor(selected.doctorId)?.name }} · 选择时段</h2>
       <p class="muted">{{ campusName(selected.campusId) }} · {{ dateLabel(selected.startAt) }}</p>
+      <p v-if="selectedResources.length" class="muted">
+        出诊资源：{{ selectedResources.map((r) => r.name).join('、') }}
+      </p>
       <div class="slot-grid">
         <button
           v-for="slot in slots"
@@ -563,6 +577,20 @@ function onScheduleChanged() {
       <h2>发布排班</h2>
       <p class="muted">发布后自动按时段生成号源，医生跨院区排班不可重叠。</p>
       <form @submit.prevent="createSchedule">
+        <label
+          >联合占用资源（可多选）<select v-model="draft.resourceIds" multiple>
+            <option
+              v-for="r in resourceOptions.filter(
+                (r) => r.enabled && String(r.campusId) === String(draft.campusId),
+              )"
+              :key="r.id"
+              :value="r.id"
+            >
+              {{ r.kind === 'ROOM' ? '诊室' : '设备' }} · {{ r.name }}
+            </option>
+          </select></label
+        >
+        <p class="muted">资源按整场排班独占，与医生排班同一事务提交；不选择则沿用仅医生排班。</p>
         <div class="form-grid">
           <label
             >院区<select v-model="draft.campusId" required>

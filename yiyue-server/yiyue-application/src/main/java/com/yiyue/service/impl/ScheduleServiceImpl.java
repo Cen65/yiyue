@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ScheduleServiceImpl implements ScheduleService {
   private final ScheduleMapper schedules;
+  private final com.yiyue.service.ResourceService resources;
   private final SlotMapper slots;
   private final CampusMapper campuses;
   private final DoctorMapper doctors;
@@ -104,6 +105,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     schedule.setEndAt(input.endAt());
     schedule.setFeeCents(input.feeCents() == null ? 0 : input.feeCents());
     schedules.insert(schedule);
+    resources.reserve(user, schedule, input.resourceIds());
     // 排班和时段一起提交，避免出现有排班却没有号源的半成品数据。
     for (LocalDateTime start = input.startAt();
         start.isBefore(input.endAt());

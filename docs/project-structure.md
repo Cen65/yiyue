@@ -1,6 +1,6 @@
 # 当前项目结构
 
-更新日期2026-11-16，后端版本0.5.0。参考人事法务项目的分层与命名，未复制其业务或凭证。
+更新日期2026-11-16，后端版本0.6.0。参考人事法务项目的分层与命名，未复制其业务或凭证。
 
 ```text
 yiyue-server/                    Maven父工程
@@ -35,3 +35,5 @@ IDEA导入父POM，运行application启动类；构建与检查从父工程执�
 v0.4.0新增WaitlistController → WaitlistService/Impl、候补/outbox/收件箱Mapper与DO、独立Req/Resp，WaitlistRunner轮询；前端waitlistApi及WaitlistPanel复用已有请求、角色导航与样式。浏览器排班夹具抽取scheduleFixture，供改约和候补共同使用。
 
 v0.5.0新增PaymentController、PaymentService/Impl、订单与模拟流水DO/Mapper、独立Req/Resp、PaymentRunner。前端PaymentsPanel/paymentsApi复用请求与布局。变更通知增加单JOIN XML及MP分页，避免全量历史ID查询。
+
+v0.6.0新增ResourceController、ResourceService/Impl、ClinicResource/ScheduleResource DO与Mapper、Req/Resp，前端ResourcesPanel/resourcesApi。复用ScheduleService排班事务和ScheduleChangeService停诊/替诊事务，无新生产依赖。

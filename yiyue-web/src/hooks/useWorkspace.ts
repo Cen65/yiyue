@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { profilesApi, type PatientProfile } from '../apis/profiles'
 import { authApi, refreshCsrf } from '../apis/auth'
 import { catalogApi } from '../apis/catalog'
+import { resourcesApi, type Resource } from '../apis/resources'
 import { paymentsApi } from '../apis/payments'
 import { appointmentApi } from '../apis/appointment'
 
@@ -16,6 +17,8 @@ export function useWorkspace() {
     error = ref(''),
     notice = ref('')
   const tab = ref('booking')
+  const resourceOptions = ref<Resource[]>([])
+  const selectedResources = ref<Resource[]>([])
   const page = ref(1),
     total = ref(0)
   const login = reactive({ tenantCode: 'hospital', username: 'patient', password: '' })
@@ -39,7 +42,14 @@ export function useWorkspace() {
     slotMinutes: 30,
     capacity: 5,
     feeCents: 0,
+    resourceIds: [] as number[],
   })
+  watch(
+    () => draft.campusId,
+    () => {
+      draft.resourceIds = []
+    },
+  )
   const staff = computed(() => user.value?.role === 'RECEPTION' || user.value?.role === 'DOCTOR')
   const profiles = ref<PatientProfile[]>([]),
     patientId = ref(''),
@@ -59,31 +69,33 @@ export function useWorkspace() {
   )
   const admin = computed(() => user.value?.role === 'ADMIN')
   const pageTitle = computed(() =>
-    tab.value === 'payments'
-      ? admin.value
-        ? '支付对账'
-        : '支付订单'
-      : tab.value === 'waitlist'
-        ? '候补与消息'
-        : tab.value === 'changes'
-          ? admin.value
-            ? '排班变更'
-            : '变更通知'
-          : tab.value === 'platform'
-            ? '机构管理'
-            : tab.value === 'operations'
-              ? '基础运营'
-              : tab.value === 'profiles'
-                ? '就诊人管理'
-                : tab.value === 'triage'
-                  ? '智能导诊'
-                  : tab.value === 'booking'
-                    ? admin.value
-                      ? '排班与号源'
-                      : '预约挂号'
-                    : admin.value || staff.value
-                      ? '预约管理'
-                      : '我的预约',
+    tab.value === 'resources'
+      ? '诊室与设备'
+      : tab.value === 'payments'
+        ? admin.value
+          ? '支付对账'
+          : '支付订单'
+        : tab.value === 'waitlist'
+          ? '候补与消息'
+          : tab.value === 'changes'
+            ? admin.value
+              ? '排班变更'
+              : '变更通知'
+            : tab.value === 'platform'
+              ? '机构管理'
+              : tab.value === 'operations'
+                ? '基础运营'
+                : tab.value === 'profiles'
+                  ? '就诊人管理'
+                  : tab.value === 'triage'
+                    ? '智能导诊'
+                    : tab.value === 'booking'
+                      ? admin.value
+                        ? '排班与号源'
+                        : '预约挂号'
+                      : admin.value || staff.value
+                        ? '预约管理'
+                        : '我的预约',
   )
   const dates = computed(() =>
     Array.from({ length: 7 }, (_, i) => {
@@ -168,6 +180,7 @@ export function useWorkspace() {
       appointmentApi.list(user.value!.role, page.value),
     ])
     catalog.value = c
+    if (admin.value) resourceOptions.value = await resourcesApi.list()
     await loadSchedules()
     if (user.value?.role === 'PATIENT') profiles.value = await profilesApi.list()
     appointments.value = a.records
@@ -196,6 +209,7 @@ export function useWorkspace() {
   async function selectSchedule(schedule: Schedule) {
     await run(async () => {
       slots.value = await catalogApi.slots(schedule.id)
+      selectedResources.value = await resourcesApi.assigned(schedule.id)
       selected.value = schedule
     })
   }
@@ -275,6 +289,8 @@ export function useWorkspace() {
   })
 
   return {
+    resourceOptions,
+    selectedResources,
     user,
     booting,
     busy,

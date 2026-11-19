@@ -63,6 +63,7 @@ export interface PageResult<T> {
   size: number
 }
 export interface ScheduleCreateReq {
+  resourceIds?: number[]
   feeCents?: number
   campusId: number
   doctorId: number
