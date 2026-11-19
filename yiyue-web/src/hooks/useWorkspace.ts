@@ -17,6 +17,7 @@ export function useWorkspace() {
     error = ref(''),
     notice = ref('')
   const tab = ref('booking')
+  const mockPayments = ref(false)
   const resourceOptions = ref<Resource[]>([])
   const selectedResources = ref<Resource[]>([])
   const page = ref(1),
@@ -179,6 +180,7 @@ export function useWorkspace() {
       catalogApi.catalog(),
       appointmentApi.list(user.value!.role, page.value),
     ])
+    mockPayments.value = (await authApi.capabilities()).mockPayments
     catalog.value = c
     if (admin.value) resourceOptions.value = await resourcesApi.list()
     await loadSchedules()
@@ -289,6 +291,7 @@ export function useWorkspace() {
   })
 
   return {
+    mockPayments,
     resourceOptions,
     selectedResources,
     user,

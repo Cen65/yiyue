@@ -29,6 +29,7 @@ import { dateLabel, timeLabel, remaining, statusLabels } from '../../utils/forma
 const {
   resourceOptions,
   selectedResources,
+  mockPayments,
   user,
   booting,
   busy,
@@ -196,7 +197,7 @@ function onScheduleChanged() {
           <Hospital :size="19" />诊室与设备
         </button>
         <button
-          v-if="!staff && !platform"
+          v-if="!staff && !platform && mockPayments"
           :class="{ active: tab === 'payments' }"
           @click="switchTab('payments')"
         >
@@ -294,6 +295,9 @@ function onScheduleChanged() {
         </div>
         <p v-if="error" class="alert error" role="alert">{{ error }}</p>
         <p v-if="notice" class="alert success" role="status">{{ notice }}</p>
+        <p v-if="!mockPayments && !platform" class="alert">
+          当前环境仅开放免费预约，尚未接入收费渠道。
+        </p>
         <PlatformPanel v-if="platform" /><OperationsPanel
           v-else-if="tab === 'operations'"
           @changed="run(load)"
@@ -364,7 +368,7 @@ function onScheduleChanged() {
             <div class="schedule-list-head">
               <span>医生 / 科室</span><span>院区 / 出诊时间</span><span>操作</span>
             </div>
-            <article v-for="s in filtered" :key="s.id" class="doctor-card">
+            <article v-for="s in filtered" :key="s.id" :data-schedule-id="s.id" class="doctor-card">
               <div class="doctor-info">
                 <div class="doctor-heading">
                   <h3>{{ doctor(s.doctorId)?.name }}</h3>
@@ -495,6 +499,7 @@ function onScheduleChanged() {
           :disabled="
             admin ||
             staff ||
+            ((selected.feeCents || 0) > 0 && !mockPayments) ||
             busy ||
             remaining(slot.capacity, slot.reserved) === 0 ||
             new Date(slot.startAt) <= new Date()
@@ -613,7 +618,7 @@ function onScheduleChanged() {
                 {{ d.name }}
               </option>
             </select></label
-          ><label
+          ><label v-if="mockPayments"
             >模拟挂号费（分，0为免费）<input
               v-model.number="draft.feeCents"
               type="number"

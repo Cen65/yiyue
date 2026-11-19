@@ -1,0 +1,85 @@
+{
+  "scope": "单机闭环HTTP混合负载；真实认证/CSRF/PostgreSQL/Redis，非医院生产验收",
+  "seed": {
+    "extra_schedules": 10000,
+    "extra_slots": 10000,
+    "extra_cancelled_appointments": 100000
+  },
+  "stages": [
+    {
+      "concurrency": 10,
+      "duration_seconds": 20.09,
+      "operations": 5448,
+      "operations_per_second": 271.14,
+      "p50_ms": 24.51,
+      "p95_ms": 105.97,
+      "p99_ms": 182.87,
+      "results": {
+        "ok": 5448
+      },
+      "operation_mix": {
+        "schedule_page": 1364,
+        "appointments": 1364,
+        "catalog": 1361,
+        "write_cycle": 1359
+      }
+    },
+    {
+      "concurrency": 50,
+      "duration_seconds": 20.11,
+      "operations": 8221,
+      "operations_per_second": 408.82,
+      "p50_ms": 108.32,
+      "p95_ms": 260.93,
+      "p99_ms": 360.6,
+      "results": {
+        "ok": 8221
+      },
+      "operation_mix": {
+        "schedule_page": 2074,
+        "appointments": 2064,
+        "catalog": 2045,
+        "write_cycle": 2038
+      }
+    },
+    {
+      "concurrency": 100,
+      "duration_seconds": 20.25,
+      "operations": 7845,
+      "operations_per_second": 387.41,
+      "p50_ms": 223.04,
+      "p95_ms": 568.87,
+      "p99_ms": 730.68,
+      "results": {
+        "ok": 7845
+      },
+      "operation_mix": {
+        "schedule_page": 1998,
+        "appointments": 1981,
+        "catalog": 1943,
+        "write_cycle": 1923
+      }
+    }
+  ],
+  "capacity_check": "0:0",
+  "all_capacity_invariant_violations": "0",
+  "last_slot_100_sessions": {
+    "results": {
+      "200": 1,
+      "409": 99
+    },
+    "p95_ms": 215.86,
+    "capacity_consistent": true
+  },
+  "version": "0.7.0",
+  "hardware": {
+    "cpu": "AMD Ryzen 7 5700G",
+    "cores": 8,
+    "logical_processors": 16,
+    "memory_gib": 27.9
+  },
+  "final_table_counts": {
+    "appointments": 213467,
+    "schedules": 20078
+  }
+}

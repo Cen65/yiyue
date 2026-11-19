@@ -1,0 +1,23 @@
+{
+  "certificate_verified": true,
+  "tls_version": "TLSv1.3",
+  "secure_cookie": true,
+  "http_only_cookie": true,
+  "same_site_lax": true,
+  "login_statuses": [
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    429
+  ],
+  "forwarded_header_cannot_bypass": true,
+  "mock_payment_api_disabled": true,
+  "charged_schedule_rejected": true,
+  "capabilities_consistent": true,
+  "scope": "本地自签证书生产profile；无公网证书或真实渠道验收"
+}

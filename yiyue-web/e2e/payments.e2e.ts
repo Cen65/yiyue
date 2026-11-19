@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test'
-import { publishSchedule } from './scheduleFixture'
+import { findScheduleRow, publishSchedule } from './scheduleFixture'
 import { login } from './helpers'
 test('收费预约模拟支付后取消退款并对账', async ({ page }) => {
   const { name } = await publishSchedule(page, 2000)
   await page.locator('.profile').click()
   await login(page)
-  const row = page.locator('.doctor-card').filter({ hasText: name }).first()
+  const row = await findScheduleRow(page, name)
   await expect(row).toBeVisible()
   await expect(row).toContainText('模拟挂号费 ¥20.00')
   await row.getByRole('button', { name: '选择时段' }).click()

@@ -25,6 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ScheduleServiceImpl implements ScheduleService {
   private final ScheduleMapper schedules;
+
+  @org.springframework.beans.factory.annotation.Value("${yiyue.payment.mock-enabled:true}")
+  private boolean mockPayments;
+
   private final com.yiyue.service.ResourceService resources;
   private final SlotMapper slots;
   private final CampusMapper campuses;
@@ -46,6 +50,8 @@ public class ScheduleServiceImpl implements ScheduleService {
             != 0) throw BusinessException.conflict("请选择未来同一天内、最长12小时且可按时段长度整分的排班");
     if (input.feeCents() != null && (input.feeCents() < 0 || input.feeCents() > 1000000))
       throw BusinessException.conflict("挂号费范围应为0至1000000分");
+    if (!mockPayments && input.feeCents() != null && input.feeCents() > 0)
+      throw BusinessException.conflict("当前环境未启用收费渠道，只可发布免费排班");
     tenants.lock(user.tenantId());
     CampusDO campus =
         campuses.selectOne(

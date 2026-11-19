@@ -10,6 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "yiyue.payment.mock-enabled",
+    havingValue = "true",
+    matchIfMissing = true)
 @RestController
 @RequiredArgsConstructor
 public class PaymentController {

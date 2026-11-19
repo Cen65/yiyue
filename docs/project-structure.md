@@ -1,6 +1,6 @@
 # 当前项目结构
 
-更新日期2026-11-16，后端版本0.6.0。参考人事法务项目的分层与命名，未复制其业务或凭证。
+更新日期2026-11-16，后端版本0.7.0。参考人事法务项目的分层与命名，未复制其业务或凭证。
 
 ```text
 yiyue-server/                    Maven父工程
@@ -37,3 +37,5 @@ v0.4.0新增WaitlistController → WaitlistService/Impl、候补/outbox/收件�
 v0.5.0新增PaymentController、PaymentService/Impl、订单与模拟流水DO/Mapper、独立Req/Resp、PaymentRunner。前端PaymentsPanel/paymentsApi复用请求与布局。变更通知增加单JOIN XML及MP分页，避免全量历史ID查询。
 
 v0.6.0新增ResourceController、ResourceService/Impl、ClinicResource/ScheduleResource DO与Mapper、Req/Resp，前端ResourcesPanel/resourcesApi。复用ScheduleService排班事务和ScheduleChangeService停诊/替诊事务，无新生产依赖。
+
+v0.7.0新增auth/LoginRateLimiter与production配置，AuthController暴露能力契约供前端隐藏不启用的收费入口；scripts增加HTTPS和备份恢复验证，docs/verification仅记录无敏感数据的结果。

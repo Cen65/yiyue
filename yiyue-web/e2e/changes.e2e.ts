@@ -1,18 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
 import { login } from './helpers'
-import { post, prepare } from './scheduleFixture'
+import { findScheduleRow, post, prepare } from './scheduleFixture'
 test('替诊经患者明确同意后生成新预约', async ({ page }) => {
   const { name, schedule, replacement, appointment } = await prepare(page)
   // 管理员通过真实排班页面发起变更。
   const filter = page.getByRole('combobox', { name: '就诊科室', exact: true })
   await filter.selectOption(String(schedule.departmentId))
-  let row = page.locator('.doctor-card').filter({ hasText: name }).first()
-  for (let i = 0; i < 20 && !(await row.count()); i++) {
-    const next = page.getByRole('button', { name: '下一页', exact: true })
-    if (await next.isDisabled()) break
-    await next.click()
-    await page.waitForTimeout(150)
-  }
+  const row = await findScheduleRow(page, name)
   await expect(row).toBeVisible()
   await row.getByRole('button', { name: '排班变更', exact: true }).click()
   await page.getByLabel('变更方式').selectOption('SUBSTITUTE')

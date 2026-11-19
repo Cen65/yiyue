@@ -8,6 +8,8 @@ spring:
       - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 yiyue:
+  login:
+    limit-enabled: false
   demo:
     enabled: false
 

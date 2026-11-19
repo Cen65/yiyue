@@ -61,3 +61,34 @@ export async function prepare(page: Page) {
   await login(page, 'admin')
   return { name, schedule, replacement, appointment }
 }
+
+export async function findScheduleRow(page: Page, name: string) {
+  const response = () =>
+    page.waitForResponse(
+      (r) => r.url().includes('/api/schedules/page?') && r.request().method() === 'GET',
+    )
+  const [initial] = await Promise.all([
+    response(),
+    page.getByRole('button', { name: '刷新排班', exact: true }).click(),
+  ])
+  await rendered(initial)
+  await expect(page.getByRole('button', { name: '刷新排班', exact: true })).toBeEnabled()
+  async function rendered(response: import('@playwright/test').Response) {
+    const data = await response.json()
+    if (data.records.length)
+      await expect(page.locator('.doctor-card').first()).toHaveAttribute(
+        'data-schedule-id',
+        String(data.records[0].id),
+      )
+    else await expect(page.locator('.doctor-card')).toHaveCount(0)
+  }
+  const row = page.locator('.doctor-card').filter({ hasText: name }).first()
+  for (let i = 0; i < 100; i++) {
+    if (await row.count()) return row
+    const next = page.getByRole('button', { name: '下一页', exact: true })
+    if (await next.isDisabled()) break
+    const [nextResponse] = await Promise.all([response(), next.click()])
+    await rendered(nextResponse)
+  }
+  throw new Error('分页后仍未找到本次测试排班：' + name)
+}

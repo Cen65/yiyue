@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { publishSchedule, post } from './scheduleFixture'
+import { findScheduleRow, publishSchedule, post } from './scheduleFixture'
 import { login } from './helpers'
 test('管理员建立诊室并发布联合排班，患者可查看出诊资源', async ({ page }) => {
   const { schedule, replacement } = await publishSchedule(page)
@@ -31,7 +31,7 @@ test('管理员建立诊室并发布联合排班，患者可查看出诊资源',
   await expect(page.getByRole('status')).toContainText('排班已发布')
   await page.locator('.profile').click()
   await login(page)
-  const row = page.locator('.doctor-card').filter({ hasText: replacement.name }).first()
+  const row = await findScheduleRow(page, replacement.name)
   await row.getByRole('button', { name: '选择时段' }).click()
   await expect(page.locator('.modal')).toContainText(name)
   await page.setViewportSize({ width: 390, height: 844 })

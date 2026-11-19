@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { post, prepare } from './scheduleFixture'
+import { findScheduleRow, post, prepare } from './scheduleFixture'
 import { login } from './helpers'
 test('家属候补获得保留后确认并读取通知', async ({ page }) => {
   const { name, appointment } = await prepare(page)
@@ -12,7 +12,7 @@ test('家属候补获得保留后确认并读取通知', async ({ page }) => {
   })
   // 重新加载档案，使候补选择使用真实授权列表。
   await page.reload()
-  const row = page.locator('.doctor-card').filter({ hasText: name }).first()
+  const row = await findScheduleRow(page, name)
   await expect(row).toBeVisible()
   await row.getByRole('button', { name: '选择时段' }).click()
   await page.getByRole('combobox', { name: '候补就诊人' }).selectOption(String(patient.id))

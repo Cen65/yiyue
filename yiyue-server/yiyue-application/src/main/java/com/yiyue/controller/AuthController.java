@@ -19,12 +19,21 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
+  @org.springframework.beans.factory.annotation.Value("${yiyue.payment.mock-enabled:true}")
+  private boolean mockPayments;
+
   private final AuthService authService;
+  private final com.yiyue.auth.LoginRateLimiter rateLimiter;
   private final HttpSessionSecurityContextRepository repository;
 
   @GetMapping("/csrf")
   Map<String, String> csrf(CsrfToken token) {
     return Map.of("token", token.getToken(), "headerName", token.getHeaderName());
+  }
+
+  @GetMapping("/capabilities")
+  Map<String, Boolean> capabilities() {
+    return Map.of("mockPayments", mockPayments);
   }
 
   @GetMapping("/me")
@@ -37,6 +46,7 @@ public class AuthController {
       @Valid @RequestBody LoginReq input,
       HttpServletRequest request,
       HttpServletResponse response) {
+    rateLimiter.acquire(request.getRemoteAddr(), input.tenantCode(), input.username());
     var user = authService.authenticate(input);
     // 登录成功后轮换会话 ID，防止会话固定攻击，并显式持久化认证上下文。
     request.getSession();
