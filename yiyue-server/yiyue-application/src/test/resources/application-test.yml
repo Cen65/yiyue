@@ -11,6 +11,8 @@ yiyue:
   demo:
     enabled: false
 
+  payment:
+    worker-enabled: false
   waitlist:
     worker-enabled: false
   change:

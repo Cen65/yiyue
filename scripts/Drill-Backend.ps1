@@ -4,7 +4,9 @@ $root=Split-Path -Parent $PSScriptRoot
 $local=Join-Path $root '.local'
 $pidFile=Join-Path $local 'pids.json'
 $entries=@(Get-Content -LiteralPath $pidFile -Raw|ConvertFrom-Json)
-$jar=Join-Path $root 'yiyue-server/yiyue-application/target/yiyue-server-0.4.0.jar'
+$version=([xml](Get-Content -LiteralPath (Join-Path $root 'yiyue-server/pom.xml') -Raw)).project.version
+if($version -notmatch '^\d+\.\d+\.\d+$'){throw '无法识别后端版本'}
+$jar=Join-Path $root "yiyue-server/yiyue-application/target/yiyue-server-$version.jar"
 foreach($entry in $entries){
  $process=Get-CimInstance Win32_Process -Filter "ProcessId=$($entry.id)" -ErrorAction SilentlyContinue
  # 严格匹配登记的可执行路径及完整JAR路径，禁止影响其他Java进程。

@@ -12,7 +12,8 @@ public record ScheduleResp(
     LocalDateTime endAt,
     Long departmentId,
     String status,
-    String stopReason) {
+    String stopReason,
+    Integer feeCents) {
   public static ScheduleResp from(ScheduleDO data) {
     return new ScheduleResp(
         data.getId(),
@@ -23,6 +24,7 @@ public record ScheduleResp(
         data.getEndAt(),
         data.getDepartmentId(),
         data.getStatus(),
-        data.getStopReason());
+        data.getStopReason(),
+        data.getFeeCents());
   }
 }

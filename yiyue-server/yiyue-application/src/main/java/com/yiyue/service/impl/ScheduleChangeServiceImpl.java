@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ScheduleChangeServiceImpl implements ScheduleChangeService {
   private final ScheduleMapper schedules;
+  private final com.yiyue.service.PaymentService payments;
   private final SlotMapper slots;
   private final AppointmentMapper appointments;
   private final TenantMapper tenants;
@@ -114,7 +115,8 @@ public class ScheduleChangeServiceImpl implements ScheduleChangeService {
                       schedule.getEndAt(),
                       minutes,
                       first.getCapacity(),
-                      schedule.getDepartmentId()))
+                      schedule.getDepartmentId(),
+                      schedule.getFeeCents()))
               .getId();
     } else if (!"STOP".equals(r.kind())) throw BusinessException.conflict("不支持的变更方式");
     // 停止新预约与影响清单一次提交；逐单处理由持久化任务恢复，不能只修改排班状态。
@@ -124,6 +126,7 @@ public class ScheduleChangeServiceImpl implements ScheduleChangeService {
             .eq(ScheduleDO::getId, scheduleId)
             .set(ScheduleDO::getStatus, "STOPPED")
             .set(ScheduleDO::getStopReason, r.reason().strip()));
+    payments.closeSchedule(u.tenantId(), scheduleId);
     var change = new ScheduleChangeDO();
     change.setTenantId(u.tenantId());
     change.setScheduleId(scheduleId);
@@ -308,23 +311,7 @@ public class ScheduleChangeServiceImpl implements ScheduleChangeService {
   }
 
   public List<ChangeItemResp> mine(SessionUser u) {
-    var owned =
-        appointments.selectList(
-            Wrappers.<AppointmentDO>lambdaQuery()
-                .eq(AppointmentDO::getTenantId, u.tenantId())
-                .eq(AppointmentDO::getUserId, u.id()));
-    if (owned.isEmpty()) return List.of();
-    return items
-        .selectPage(
-            new Page<>(1, 100),
-            Wrappers.<ScheduleChangeItemDO>lambdaQuery()
-                .eq(ScheduleChangeItemDO::getTenantId, u.tenantId())
-                .in(
-                    ScheduleChangeItemDO::getAppointmentId,
-                    owned.stream().map(AppointmentDO::getId).toList())
-                .orderByDesc(ScheduleChangeItemDO::getId))
-        .getRecords()
-        .stream()
+    return items.selectOwnedPage(new Page<>(1, 100), u.tenantId(), u.id()).getRecords().stream()
         .map(i -> view(i, this.owned(u, i.getChangeId()).getReason()))
         .toList();
   }

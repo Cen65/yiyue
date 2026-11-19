@@ -26,6 +26,7 @@ export interface Catalog {
   doctors: Doctor[]
 }
 export interface Schedule {
+  feeCents?: number
   departmentId: number
   id: number
   campusId: number
@@ -62,6 +63,7 @@ export interface PageResult<T> {
   size: number
 }
 export interface ScheduleCreateReq {
+  feeCents?: number
   campusId: number
   doctorId: number
   startAt: string

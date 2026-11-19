@@ -18,4 +18,5 @@ public class ScheduleDO {
   private Long departmentId;
   private String status = "OPEN";
   private String stopReason;
+  private Integer feeCents = 0;
 }

@@ -46,7 +46,8 @@ def stage(concurrency,seconds):
  report['stages'].append(result);print(json.dumps(result),flush=True)
 for c in [10,50,100]:stage(c,20)
 report['capacity_check']=sql(f"SELECT reserved||':'||(SELECT count(*) FROM appointment WHERE slot_id={int(slot['id'])} AND status='BOOKED') FROM appointment_slot WHERE id={int(slot['id'])}")
-report['all_capacity_invariant_violations']=sql(f"SELECT count(*) FROM appointment_slot s WHERE tenant_id={tenant} AND reserved<>((SELECT count(*) FROM appointment a WHERE a.slot_id=s.id AND a.status<>'CANCELLED')+(SELECT count(*) FROM waitlist_entry w WHERE w.slot_id=s.id AND w.status='OFFERED'))")
+payment_holds=f"(SELECT count(*) FROM payment_order po WHERE po.slot_id=s.id AND po.status='PENDING')" if sql("SELECT to_regclass('public.payment_order') IS NOT NULL")=="t" else '0'
+report['all_capacity_invariant_violations']=sql(f"SELECT count(*) FROM appointment_slot s WHERE tenant_id={tenant} AND reserved<>((SELECT count(*) FROM appointment a WHERE a.slot_id=s.id AND a.status<>'CANCELLED')+(SELECT count(*) FROM waitlist_entry w WHERE w.slot_id=s.id AND w.status='OFFERED')+{payment_holds})")
 assert report['capacity_check']=='0:0',report['capacity_check']
 assert report['all_capacity_invariant_violations']=='0',report['all_capacity_invariant_violations']
 (ROOT/'.local/load-result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')

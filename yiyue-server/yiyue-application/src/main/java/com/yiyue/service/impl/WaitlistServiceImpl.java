@@ -63,6 +63,8 @@ public class WaitlistServiceImpl implements WaitlistService {
                 .eq(SlotDO::getTenantId, u.tenantId())
                 .eq(SlotDO::getId, slotId));
     if (slot == null) throw BusinessException.missing();
+    if (schedules.selectById(slot.getScheduleId()).getFeeCents() > 0)
+      throw BusinessException.conflict("当前收费排班暂不支持候补，请选择其他时段");
     if (!open(slot)) throw BusinessException.conflict("排班已关闭或时段已开始");
     var existing =
         entries.selectOne(

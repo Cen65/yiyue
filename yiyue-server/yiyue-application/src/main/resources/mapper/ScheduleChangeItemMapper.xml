@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yiyue.mapper.ScheduleChangeItemMapper"><resultMap id="item" type="com.yiyue.model.entity.ScheduleChangeItemDO"><id column="id" property="id"/><result column="tenant_id" property="tenantId"/><result column="change_id" property="changeId"/><result column="appointment_id" property="appointmentId"/><result column="target_schedule_id" property="targetScheduleId"/><result column="new_appointment_id" property="newAppointmentId"/><result column="status" property="status"/><result column="decision" property="decision"/><result column="attempts" property="attempts"/><result column="last_error" property="lastError"/></resultMap>
+<!-- 在数据库按账号筛选，避免把全部历史预约ID装入IN条件；分页交给MP插件。 -->
+<select id="selectOwnedPage" resultMap="item">SELECT i.* FROM schedule_change_item i JOIN appointment a ON a.id=i.appointment_id AND a.tenant_id=i.tenant_id WHERE i.tenant_id=#{tenantId} AND a.user_id=#{userId} ORDER BY i.id DESC</select>
+</mapper>

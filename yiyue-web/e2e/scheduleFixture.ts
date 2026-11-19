@@ -11,7 +11,7 @@ export async function post(page: Page, url: string, data: unknown) {
   const body = await response.text()
   return body ? JSON.parse(body) : undefined
 }
-export async function prepare(page: Page) {
+export async function publishSchedule(page: Page, feeCents = 0) {
   await login(page, 'admin')
   const cat = await (await page.request.get('/api/catalog')).json()
   const campusId = cat.campuses[0].id,
@@ -44,8 +44,13 @@ export async function prepare(page: Page) {
     endAt: day + 'T10:00:00',
     slotMinutes: 30,
     capacity: 1,
+    feeCents,
   })
   const slots = await (await page.request.get(`/api/slots?scheduleId=${schedule.id}`)).json()
+  return { name, schedule, replacement, slots }
+}
+export async function prepare(page: Page) {
+  const { name, schedule, replacement, slots } = await publishSchedule(page)
   await page.locator('.profile').click()
   await login(page)
   const appointment = await post(page, '/patient/appointments', {

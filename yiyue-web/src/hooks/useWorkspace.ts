@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { profilesApi, type PatientProfile } from '../apis/profiles'
 import { authApi, refreshCsrf } from '../apis/auth'
 import { catalogApi } from '../apis/catalog'
+import { paymentsApi } from '../apis/payments'
 import { appointmentApi } from '../apis/appointment'
 
 import type { Appointment, Catalog, Schedule, Slot, User } from '../types'
@@ -37,6 +38,7 @@ export function useWorkspace() {
     endAt: '',
     slotMinutes: 30,
     capacity: 5,
+    feeCents: 0,
   })
   const staff = computed(() => user.value?.role === 'RECEPTION' || user.value?.role === 'DOCTOR')
   const profiles = ref<PatientProfile[]>([]),
@@ -57,27 +59,31 @@ export function useWorkspace() {
   )
   const admin = computed(() => user.value?.role === 'ADMIN')
   const pageTitle = computed(() =>
-    tab.value === 'waitlist'
-      ? '候补与消息'
-      : tab.value === 'changes'
-        ? admin.value
-          ? '排班变更'
-          : '变更通知'
-        : tab.value === 'platform'
-          ? '机构管理'
-          : tab.value === 'operations'
-            ? '基础运营'
-            : tab.value === 'profiles'
-              ? '就诊人管理'
-              : tab.value === 'triage'
-                ? '智能导诊'
-                : tab.value === 'booking'
-                  ? admin.value
-                    ? '排班与号源'
-                    : '预约挂号'
-                  : admin.value || staff.value
-                    ? '预约管理'
-                    : '我的预约',
+    tab.value === 'payments'
+      ? admin.value
+        ? '支付对账'
+        : '支付订单'
+      : tab.value === 'waitlist'
+        ? '候补与消息'
+        : tab.value === 'changes'
+          ? admin.value
+            ? '排班变更'
+            : '变更通知'
+          : tab.value === 'platform'
+            ? '机构管理'
+            : tab.value === 'operations'
+              ? '基础运营'
+              : tab.value === 'profiles'
+                ? '就诊人管理'
+                : tab.value === 'triage'
+                  ? '智能导诊'
+                  : tab.value === 'booking'
+                    ? admin.value
+                      ? '排班与号源'
+                      : '预约挂号'
+                    : admin.value || staff.value
+                      ? '预约管理'
+                      : '我的预约',
   )
   const dates = computed(() =>
     Array.from({ length: 7 }, (_, i) => {
@@ -210,16 +216,24 @@ export function useWorkspace() {
     if (!pendingSlot.value) return
     await run(async () => {
       // 网络失败时保留同一个幂等键，重试不会产生第二张预约单。
-      await appointmentApi.book({
+      const charged = (selected.value?.feeCents || 0) > 0
+      const request = {
         slotId: pendingSlot.value!.id,
         requestKey: bookingKey,
         patientId: patientId.value ? Number(patientId.value) : undefined,
-      })
+      }
+      if (charged) await paymentsApi.create(request)
+      else
+        await appointmentApi.book({
+          slotId: pendingSlot.value!.id,
+          requestKey: bookingKey,
+          patientId: patientId.value ? Number(patientId.value) : undefined,
+        })
       pendingSlot.value = null
       selected.value = null
-      tab.value = 'appointments'
+      tab.value = charged ? 'payments' : 'appointments'
       page.value = 1
-      notice.value = '预约成功'
+      notice.value = charged ? '订单已创建，请在15分钟内完成模拟支付' : '预约成功'
       await load()
     })
   }

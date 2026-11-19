@@ -43,6 +43,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         || Duration.between(input.startAt(), input.endAt()).toSeconds()
                 % (input.slotMinutes() * 60L)
             != 0) throw BusinessException.conflict("请选择未来同一天内、最长12小时且可按时段长度整分的排班");
+    if (input.feeCents() != null && (input.feeCents() < 0 || input.feeCents() > 1000000))
+      throw BusinessException.conflict("挂号费范围应为0至1000000分");
     tenants.lock(user.tenantId());
     CampusDO campus =
         campuses.selectOne(
@@ -100,6 +102,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     schedule.setDepartmentId(departmentId);
     schedule.setStartAt(input.startAt());
     schedule.setEndAt(input.endAt());
+    schedule.setFeeCents(input.feeCents() == null ? 0 : input.feeCents());
     schedules.insert(schedule);
     // 排班和时段一起提交，避免出现有排班却没有号源的半成品数据。
     for (LocalDateTime start = input.startAt();

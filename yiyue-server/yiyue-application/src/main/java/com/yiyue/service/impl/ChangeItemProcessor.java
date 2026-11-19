@@ -15,6 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class ChangeItemProcessor {
   private static final int MAX_ATTEMPTS = 3;
   private final TenantMapper tenants;
+  private final com.yiyue.service.PaymentService payments;
   private final ScheduleChangeMapper changes;
   private final ScheduleChangeItemMapper items;
   private final AppointmentMapper appointments;
@@ -54,6 +55,7 @@ public class ChangeItemProcessor {
                 throw BusinessException.conflict("号源或预约状态异常");
             } else if (!"CANCELLED".equals(a.getStatus()))
               throw BusinessException.conflict("预约已进入接诊流程");
+            payments.onCancelled(change.getTenantId(), a.getId());
             item.setStatus("DONE");
             item.setAttempts(item.getAttempts() + 1);
             item.setLastError(null);

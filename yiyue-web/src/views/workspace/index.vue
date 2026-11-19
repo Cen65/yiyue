@@ -15,6 +15,7 @@ import {
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import type { Schedule } from '../../types'
+import PaymentsPanel from '../payments/PaymentsPanel.vue'
 import WaitlistPanel from '../waitlist/WaitlistPanel.vue'
 import { waitlistApi } from '../../apis/waitlist'
 import ChangesPanel from '../changes/ChangesPanel.vue'
@@ -185,6 +186,13 @@ function onScheduleChanged() {
       <span class="nav-label">门诊服务</span>
       <nav>
         <button
+          v-if="!staff && !platform"
+          :class="{ active: tab === 'payments' }"
+          @click="switchTab('payments')"
+        >
+          <ClipboardList :size="19" />{{ admin ? '支付对账' : '支付订单' }}
+        </button>
+        <button
           v-if="!admin && !staff && !platform"
           :class="{ active: tab === 'waitlist' }"
           @click="switchTab('waitlist')"
@@ -287,6 +295,7 @@ function onScheduleChanged() {
           @changed="run(load)"
         />
         <WaitlistPanel v-else-if="tab === 'waitlist'" />
+        <PaymentsPanel v-else-if="tab === 'payments'" :admin="admin" />
         <PatientProfiles v-else-if="tab === 'profiles'" />
         <TriagePanel v-else-if="tab === 'triage'" @choose-department="chooseDepartment" />
         <template v-else-if="tab === 'booking'">
@@ -354,6 +363,11 @@ function onScheduleChanged() {
                   }}</span>
                 </div>
                 <p class="specialty">擅长：{{ doctor(s.doctorId)?.specialty }}</p>
+                <small>{{
+                  (s.feeCents || 0) > 0
+                    ? `模拟挂号费 ¥${((s.feeCents || 0) / 100).toFixed(2)}`
+                    : '免费预约'
+                }}</small>
               </div>
               <div class="schedule-details">
                 <span><MapPin :size="14" />{{ campusName(s.campusId) }}</span
@@ -477,7 +491,7 @@ function onScheduleChanged() {
           ><span>剩余 {{ remaining(slot.capacity, slot.reserved) }} / {{ slot.capacity }}</span>
         </button>
       </div>
-      <template v-if="!admin && !staff"
+      <template v-if="!admin && !staff && !(selected.feeCents || 0)"
         ><label
           >候补就诊人<select v-model="patientId">
             <option value="">本人（默认）</option>
@@ -509,7 +523,12 @@ function onScheduleChanged() {
   </div>
   <div v-if="pendingSlot" class="overlay confirm-layer">
     <section class="modal small">
-      <h2>确认预约</h2>
+      <h2>{{ (selected?.feeCents || 0) > 0 ? '创建模拟支付订单' : '确认预约' }}</h2>
+      <p v-if="(selected?.feeCents || 0) > 0">
+        模拟挂号费 ¥{{
+          ((selected?.feeCents || 0) / 100).toFixed(2)
+        }}，仅演示，不会真实扣款；订单最多占号15分钟。
+      </p>
       <p>{{ doctor(selected?.doctorId || 0)?.name }} · {{ dateLabel(pendingSlot.startAt) }}</p>
       <p>{{ timeLabel(pendingSlot.startAt) }} — {{ timeLabel(pendingSlot.endAt) }}</p>
       <label
@@ -529,7 +548,9 @@ function onScheduleChanged() {
       <div class="modal-actions">
         <button :disabled="busy" @click="pendingSlot = null">返回</button
         ><button class="primary" :disabled="busy" @click="confirmBooking">
-          <Check :size="17" />{{ busy ? '正在提交…' : '确认预约' }}
+          <Check :size="17" />{{
+            busy ? '正在提交…' : (selected?.feeCents || 0) > 0 ? '创建支付订单' : '确认预约'
+          }}
         </button>
       </div>
     </section>
@@ -564,6 +585,13 @@ function onScheduleChanged() {
                 {{ d.name }}
               </option>
             </select></label
+          ><label
+            >模拟挂号费（分，0为免费）<input
+              v-model.number="draft.feeCents"
+              type="number"
+              min="0"
+              max="1000000"
+              required /></label
           ><label>开始时间<input v-model="draft.startAt" type="datetime-local" required /></label
           ><label>结束时间<input v-model="draft.endAt" type="datetime-local" required /></label
           ><label

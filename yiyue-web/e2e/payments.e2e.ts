@@ -1,0 +1,43 @@
+import { test, expect } from '@playwright/test'
+import { publishSchedule } from './scheduleFixture'
+import { login } from './helpers'
+test('收费预约模拟支付后取消退款并对账', async ({ page }) => {
+  const { name } = await publishSchedule(page, 2000)
+  await page.locator('.profile').click()
+  await login(page)
+  const row = page.locator('.doctor-card').filter({ hasText: name }).first()
+  await expect(row).toBeVisible()
+  await expect(row).toContainText('模拟挂号费 ¥20.00')
+  await row.getByRole('button', { name: '选择时段' }).click()
+  await expect(page.getByRole('combobox', { name: '候补就诊人' })).toHaveCount(0)
+  await page.locator('.slot-grid button:enabled').first().click()
+  await page.getByRole('button', { name: '创建支付订单', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '支付订单', exact: true })).toBeVisible()
+  const order = page.locator('.payment-row').filter({ hasText: name }).first()
+  await expect(order).toContainText('待支付')
+  page.once('dialog', (d) => d.accept())
+  await order.getByRole('button', { name: '模拟支付', exact: true }).click()
+  await expect(order).toContainText('已支付')
+  const orders = await (await page.request.get('/api/patient/payment-orders')).json()
+  const paid = orders.find((o: { doctorName: string }) => o.doctorName === name)
+  await page.getByRole('button', { name: '我的预约', exact: true }).click()
+  const appointment = page
+    .locator('.appointment-row')
+    .filter({ hasText: `预约单 #${paid.appointmentId} ·` })
+  await expect(appointment).toBeVisible()
+  page.once('dialog', (d) => d.accept())
+  await appointment.getByRole('button', { name: '取消预约', exact: true }).click()
+  await expect(appointment).toContainText('已取消')
+  await page.getByRole('button', { name: '支付订单', exact: true }).click()
+  await expect(order).toContainText('已退款', { timeout: 15000 })
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
+  await page.screenshot({ path: test.info().outputPath('payment-mobile.png'), fullPage: true })
+  await page.locator('.profile').click()
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await login(page, 'admin')
+  await page.getByRole('button', { name: '支付对账', exact: true }).click()
+  await expect(
+    page.locator('.payment-row').filter({ hasText: `订单 #${paid.id} ·` }),
+  ).toContainText('账实一致')
+})

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
   private final SlotMapper slots;
+  private final com.yiyue.service.PaymentService payments;
   private final com.yiyue.service.WaitlistService waitlist;
   private final AppointmentMapper appointments;
   private final AuditEventMapper audits;
@@ -65,6 +66,7 @@ public class BookingServiceImpl implements BookingService {
                 .eq(com.yiyue.model.entity.ScheduleDO::getId, slot.getScheduleId())
                 .eq(com.yiyue.model.entity.ScheduleDO::getStatus, "OPEN"));
     if (schedule == null) throw BusinessException.conflict("排班已停诊，请查看变更通知");
+    if (schedule.getFeeCents() > 0) throw BusinessException.conflict("收费排班请先创建模拟支付订单");
     if (!slot.getStartAt().isAfter(LocalDateTime.now(clock)))
       throw BusinessException.conflict("该时段已开始，无法预约");
     // 数据库原子占位与预约落库共用事务；重复请求的唯一键冲突会回滚占用。
@@ -104,6 +106,7 @@ public class BookingServiceImpl implements BookingService {
     if (changed == 0) throw BusinessException.conflict("预约状态已变化，请刷新");
     if (slots.release(user.tenantId(), appointment.getSlotId()) != 1)
       throw BusinessException.conflict("号源数据异常，请联系管理员");
+    payments.onCancelled(user.tenantId(), id);
     waitlist.reconcile(user.tenantId(), appointment.getSlotId());
     audit(user, "CANCEL", id);
   }
